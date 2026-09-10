@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: voice-agent-backend
+    runtime: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: 8000
+      - key: LLM_API_KEY
+        sync: false
+      - key: RIME_API_KEY
+        sync: false
