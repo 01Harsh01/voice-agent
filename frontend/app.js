@@ -182,6 +182,10 @@ function getStoredGatewayUrl() {
 function resolveGatewayUrl() {
   const custom = getStoredGatewayUrl().trim();
   if (custom) return custom;
+  // If hosted on Vercel or Netlify, automatically connect to the live Render backend gateway
+  if (window.location.host.includes('vercel.app') || window.location.host.includes('netlify.app')) {
+    return `wss://voice-agent-backend-82ca.onrender.com/ws/voice?conversation_id=${conversationId}`;
+  }
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
   return `${protocol}//${window.location.host}/ws/voice?conversation_id=${conversationId}`;
 }
