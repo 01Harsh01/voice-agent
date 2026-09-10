@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceFlow AI — Real-Time Voice Agent (Qwen + Rime)</title>
+  <meta name="description" content="Production-grade real-time AI voice assistant with Qwen reasoning, live generic web tools, and streaming Rime TTS.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="brand">
+        <div class="logo-orb"></div>
+        <div class="brand-text">
+          <h1>VoiceFlow AI</h1>
+          <span class="badge">Production v1.0</span>
+        </div>
+      </div>
+      <div class="header-badges">
+        <div class="spec-tag"><span class="indicator-dot online"></span> Qwen2.5-72B</div>
+        <div class="spec-tag"><span class="indicator-dot rime"></span> Rime Coda TTS</div>
+        <div class="spec-tag"><span class="indicator-dot tool"></span> Live Web Engine</div>
+        <button id="audio-test-btn" class="spec-tag audio-status-btn" title="Click to test speaker and unlock browser audio">
+          <span id="audio-status-dot" class="indicator-dot online"></span>
+          <span id="audio-status-text">🔊 Sound: Active</span>
+        </button>
+        <button id="demo-mode-toggle" class="icon-button demo-btn" title="Toggle Interactive In-Browser Demo Simulation Mode">
+          <span id="mode-dot" class="indicator-dot rime"></span>
+          <span id="demo-mode-label">Demo Mode</span>
+        </button>
+        <button id="settings-btn" class="icon-button" title="Configure Backend Gateway WebSocket URL">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+          Gateway
+        </button>
+        <button id="toggle-trace-btn" class="icon-button" title="Toggle Real-Time Debug Trace Drawer">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="4 17 10 11 4 5"></polyline>
+            <line x1="12" y1="19" x2="20" y2="19"></line>
+          </svg>
+          Trace Logs
+        </button>
+      </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main class="main-content">
+      <!-- Voice Stage -->
+      <section class="voice-stage">
+        <!-- Status Pill -->
+        <div id="connection-status" class="status-pill">
+          <span class="status-indicator"></span>
+          <span id="status-label">Connecting to Voice Gateway...</span>
+        </div>
+
+        <!-- Glowing Voice Orb & Visualizer -->
+        <div class="orb-wrapper">
+          <div id="voice-orb" class="voice-orb idle">
+            <div class="orb-core"></div>
+            <div class="orb-ring ring-1"></div>
+            <div class="orb-ring ring-2"></div>
+            <div class="orb-ring ring-3"></div>
+          </div>
+          <canvas id="visualizer-canvas" class="visualizer" width="360" height="80"></canvas>
+        </div>
+
+        <!-- Current Transcript / Live Feedback -->
+        <div class="live-transcript-box">
+          <p id="live-transcript" class="live-transcript">Click the microphone to start speaking naturally...</p>
+        </div>
+
+        <!-- Controls -->
+        <div class="controls-bar">
+          <button id="mic-btn" class="mic-button" aria-label="Toggle Microphone">
+            <svg id="mic-icon" width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
+              <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
+              <line x1="12" y1="19" x2="12" y2="23"></line>
+              <line x1="8" y1="23" x2="16" y2="23"></line>
+            </svg>
+          </button>
+          <button id="interrupt-btn" class="interrupt-button" title="Interrupt / Barge-in immediately">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="6" y="4" width="4" height="16"></rect>
+              <rect x="14" y="4" width="4" height="16"></rect>
+            </svg>
+            Interrupt
+          </button>
+          <button id="clear-btn" class="clear-button" title="Clear Conversation History">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="3 6 5 6 21 6"></polyline>
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Manual Text Input (Fallback / Testing) -->
+        <form id="text-input-form" class="text-input-form">
+          <input type="text" id="manual-text-input" placeholder="Or type a test question (e.g. 'What happened in AI today?')..." autocomplete="off">
+          <button type="submit" id="send-text-btn">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="22" y1="2" x2="11" y2="13"></line>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+            </svg>
+          </button>
+        </form>
+      </section>
+
+      <!-- Chat / Turns Log -->
+      <section class="conversation-pane">
+        <div class="pane-header">
+          <h3>Conversation History</h3>
+          <span id="turn-count" class="turn-count">0 turns</span>
+        </div>
+        <div id="messages-container" class="messages-container">
+          <div class="welcome-card">
+            <h4>No Mock Data &bull; Real-Time Intelligence</h4>
+            <p>Speak naturally or test challenging prompts:</p>
+            <ul>
+              <li><strong>Live Web:</strong> <em>"What major technology news happened today?"</em></li>
+              <li><strong>Temporal & Weather:</strong> <em>"What's the weather in Mumbai tomorrow?"</em></li>
+              <li><strong>Multi-Hop:</strong> <em>"Find an AI announcement today, tell me who led it, and what they previously worked on."</em></li>
+              <li><strong>Barge-in:</strong> Speak or press <em>Interrupt</em> while the assistant speaks.</li>
+            </ul>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Gateway Settings Modal -->
+    <div id="settings-modal" class="modal-overlay hidden">
+      <div class="modal-content">
+        <div class="modal-header">
+          <div class="modal-title">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="3"></circle>
+              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+            </svg>
+            <h3>Voice Gateway Settings</h3>
+          </div>
+          <button id="close-modal-btn" class="close-btn">&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="modal-desc">
+            When deployed on <strong>Vercel</strong> or <strong>Netlify</strong>, the static frontend can connect to any hosted Python backend (e.g., Render, Railway, Fly.io, ngrok) over WebSockets.
+          </p>
+          <div class="form-group">
+            <label for="backend-url-input">WebSocket Gateway URL</label>
+            <input type="text" id="backend-url-input" placeholder="wss://your-backend.onrender.com/ws/voice or ws://localhost:8000/ws/voice">
+          </div>
+          <div class="modal-actions">
+            <button id="save-gateway-btn" class="primary-btn">Save & Reconnect</button>
+            <button id="reset-gateway-btn" class="secondary-btn">Reset to Default</button>
+          </div>
+          <div class="modal-divider"></div>
+          <div class="demo-callout">
+            <div class="callout-header">
+              <span class="indicator-dot mode-dot"></span>
+              <h4>Interactive Browser Demo Mode</h4>
+            </div>
+            <p>
+              No backend server deployed yet? Experience VoiceFlow's voice recognition, glowing orb states, reasoning trace, tool invocation, and speech synthesis directly inside your browser!
+            </p>
+            <button id="modal-demo-btn" class="demo-cta-btn">Switch to Interactive Demo Mode</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Real-Time Trace Drawer -->
+    <aside id="trace-drawer" class="trace-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <h3>Real-Time Debug Trace</h3>
+        </div>
+        <button id="close-trace-btn" class="close-btn">&times;</button>
+      </div>
+      <div class="drawer-stats">
+        <div class="stat-item"><span class="stat-label">Request ID:</span> <span id="trace-req-id" class="stat-value">-</span></div>
+        <div class="stat-item"><span class="stat-label">LLM Latency:</span> <span id="trace-llm-lat" class="stat-value">-</span></div>
+        <div class="stat-item"><span class="stat-label">TTFB (Audio):</span> <span id="trace-ttfb" class="stat-value">-</span></div>
+      </div>
+      <div id="trace-events" class="trace-events">
+        <div class="trace-placeholder">Awaiting first user turn. Trace logs will appear here in real time to prove authentic tool calling and research.</div>
+      </div>
+    </aside>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
